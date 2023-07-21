@@ -2,9 +2,11 @@ package com.example.bookmarket.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.example.bookmarket.dao.IAddressDao;
 import com.example.bookmarket.dao.IBookDao;
 import com.example.bookmarket.dao.IOrderBookDao;
 import com.example.bookmarket.dao.IOrderDao;
+import com.example.bookmarket.model.Address;
 import com.example.bookmarket.model.Book;
 import com.example.bookmarket.model.Order;
 import com.example.bookmarket.model.OrderBook;
@@ -24,7 +26,8 @@ public class OrderServiceImpl implements IOrderService {
     private IOrderBookDao orderBookDao;
     @Autowired
     private IBookDao bookDao;
-
+    @Autowired
+    private IAddressDao addressDao;
     @Override
     public List<Order> getOrderList(String oid, String uid, String orderFilter, Integer page, Integer count) {
         Page<Order> p = new Page<>(page, count);
@@ -38,6 +41,7 @@ public class OrderServiceImpl implements IOrderService {
             list = orderDao.selectPage(p, queryWrapper).getRecords();
         }
         for (Order order : list) {
+            Address address = addressDao.selectOne(new QueryWrapper<Address>().eq("id", order.getAid()));
             List<OrderBook> books = orderBookDao.selectList(new QueryWrapper<OrderBook>().eq("oid", order.getOid()));
             for (OrderBook orderBook: books) {
                 Book book = bookDao.selectOne(new QueryWrapper<Book>().eq("bid", orderBook.getBid()));
@@ -50,6 +54,7 @@ public class OrderServiceImpl implements IOrderService {
                 book.setImage(null);
                 orderBook.setBook(book);
             }
+            order.setAddress(address);
             order.setBooks(books);
         }
         return list;
