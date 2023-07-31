@@ -8,4 +8,6 @@ import java.util.List;
 
 public interface IOrderService {
     public List<Order> getOrderList(String oid, String uid, String orderFilter, Integer page, Integer count);
+
+    public Long getRecordsByOidAndUidAndStatus(String oid, String uid, String orderFilter);
 }
