@@ -28,6 +28,7 @@ public class OrderServiceImpl implements IOrderService {
     private IBookDao bookDao;
     @Autowired
     private IAddressDao addressDao;
+
     @Override
     public List<Order> getOrderList(String oid, String uid, String orderFilter, Integer page, Integer count) {
         Page<Order> p = new Page<>(page, count);
@@ -36,14 +37,20 @@ public class OrderServiceImpl implements IOrderService {
                 eq("uid", uid).
                 orderByDesc("created_time");
         List<Order> list = new ArrayList<>();
-        System.out.println(queryWrapper.getTargetSql());
-        if (orderFilter.equals("all")) {
-            list = orderDao.selectPage(p, queryWrapper).getRecords();
+        if (orderFilter.equals("notPay")) {//待支付订单
+            queryWrapper.eq("status", 0);
+        } else if (orderFilter.equals("notReceive")) {//待收货订单
+            queryWrapper.and(wrapper -> wrapper.eq("status", 1).or().eq("status", 2));
+        } else if (orderFilter.equals("finish")) {//已完成
+            queryWrapper.and(wrapper -> wrapper.eq("status", 3).or().eq("status", 6));
+        } else if (orderFilter.equals("cancel")) {//已取消
+            queryWrapper.and(wrapper -> wrapper.eq("status", 4).or().eq("status", 5));
         }
+        list = orderDao.selectPage(p, queryWrapper).getRecords();
         for (Order order : list) {
             Address address = addressDao.selectOne(new QueryWrapper<Address>().eq("id", order.getAid()));
             List<OrderBook> books = orderBookDao.selectList(new QueryWrapper<OrderBook>().eq("oid", order.getOid()));
-            for (OrderBook orderBook: books) {
+            for (OrderBook orderBook : books) {
                 Book book = bookDao.selectOne(new QueryWrapper<Book>().eq("bid", orderBook.getBid()));
                 byte[] image = book.getImage();
                 String imageString = "";
@@ -58,5 +65,22 @@ public class OrderServiceImpl implements IOrderService {
             order.setBooks(books);
         }
         return list;
+    }
+
+    @Override
+    public Long getRecordsByOidAndUidAndStatus(String oid, String uid, String orderFilter) {
+        QueryWrapper<Order> queryWrapper = new QueryWrapper<Order>().
+                like("oid", oid).
+                eq("uid", uid);
+        if (orderFilter.equals("notPay")) {//待支付订单
+            queryWrapper.eq("status", 0);
+        } else if (orderFilter.equals("notReceive")) {//待收货订单
+            queryWrapper.and(wrapper -> wrapper.eq("status", 1).or().eq("status", 2));
+        } else if (orderFilter.equals("finish")) {//已完成
+            queryWrapper.and(wrapper -> wrapper.eq("status", 3).or().eq("status", 6));
+        } else if (orderFilter.equals("cancel")) {//已取消
+            queryWrapper.and(wrapper -> wrapper.eq("status", 4).or().eq("status", 5));
+        }
+        return orderDao.selectCount(queryWrapper);
     }
 }
