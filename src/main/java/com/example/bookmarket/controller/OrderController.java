@@ -1,6 +1,7 @@
 package com.example.bookmarket.controller;
 
 import com.alibaba.fastjson2.JSON;
+import com.example.bookmarket.model.Order;
 import com.example.bookmarket.service.IOrderService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +9,8 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/order")
@@ -24,7 +27,16 @@ public class OrderController {
     }
 
     @RequestMapping(value = "/orderList", produces = "application/json;charset=utf-8", method = {RequestMethod.POST, RequestMethod.GET})
-    public String orderList(String orderFilter){
-        return JSON.toJSONString(orderService.getOrderList("","123456789","all",1,5));
+    public String orderList(String oid,String orderFilter,Integer page) {
+        Long recordsFiltered = orderService.getRecordsByOidAndUidAndStatus(oid, "123456789", orderFilter);
+        List<Order> orderList = orderService.getOrderList(oid, "123456789", orderFilter, page, 5);
+        long totalPage = 0L;//计算总页数，一页显示5条数据
+        if (recordsFiltered % 5 == 0) {
+            totalPage = recordsFiltered / 5;
+        } else {
+            totalPage = recordsFiltered / 5 + 1;
+        }
+        return "{\"totalPage\":" + totalPage +
+                ",\"orderList\":" + JSON.toJSONString(orderList) + "}";
     }
 }
