@@ -38,3 +38,9 @@
 * OrderService的getOrderList()所有功能全部完成（订单号搜索、订单类型搜索、分页）
 * 给OrderService添加了getRecordsByOidAndUidAndStatus()，用于计算经过筛选后的订单数量，以全部完成
 * OrderController的orderList()所有功能全部完成，并在这里计算页数返回到前端
+
+### 2023/8/1
+* 看了一下定时任务的实现，有两种，一种是SpringBoot的ThreadPoolTaskScheduler，另一种是Quartz。
+在这里我选择了Quartz，由于我想实现当订单付款时取消订单任务，
+如果使用ThreadPoolTaskScheduler， 需要一个Map来存放对应订单id和ScheduledFuture对象，当订单量超过一定数量，这个Map必爆炸
+所以采用Quartz，因为Quartz定时器在创建时有一个Trigger，当用户在15分钟内付款，我可以根据TriggerKey来关闭对应的定时器，这样效率会高很多。
