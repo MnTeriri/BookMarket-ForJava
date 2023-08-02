@@ -1,21 +1,29 @@
 package com.example.bookmarket.service.impl;
 
+import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.bookmarket.dao.IAddressDao;
 import com.example.bookmarket.dao.IBookDao;
 import com.example.bookmarket.dao.IOrderBookDao;
 import com.example.bookmarket.dao.IOrderDao;
+import com.example.bookmarket.job.OrderJob;
 import com.example.bookmarket.model.Address;
 import com.example.bookmarket.model.Book;
 import com.example.bookmarket.model.Order;
 import com.example.bookmarket.model.OrderBook;
 import com.example.bookmarket.service.IOrderService;
 import com.example.bookmarket.util.ImageUtils;
+import org.quartz.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.quartz.SchedulerFactoryBean;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -28,6 +36,61 @@ public class OrderServiceImpl implements IOrderService {
     private IBookDao bookDao;
     @Autowired
     private IAddressDao addressDao;
+    @Autowired
+    private SchedulerFactoryBean schedulerFactoryBean;
+
+    @Override
+    public Integer createOrder(Order order) {
+        String oid = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")) + RandomUtil.randomNumbers(6);
+        while (searchOrder(oid) != null) {//如果生成的订单号存在，则重新生成，直到不存在
+            oid = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")) + RandomUtil.randomNumbers(6);
+        }
+        order.setOid(oid);
+        Integer result = orderDao.createOrder(order);
+        if (result == 1) {//如果订单创建成功
+            // 设置订单定时任务，在15分钟后检查订单状态
+            JobDetail jobDetail = JobBuilder.newJob(OrderJob.class)
+                    .withIdentity(order.getOid(), "orderGroup")
+                    .usingJobData("orderOid", order.getOid())
+                    .build();
+            LocalDateTime localDateTime = LocalDateTime.now().plusSeconds(5);
+            Trigger trigger = TriggerBuilder.newTrigger()
+                    .withIdentity(order.getOid(), "orderGroup")
+                    .startAt(Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant()))
+                    .build();
+            try {
+                Scheduler scheduler = schedulerFactoryBean.getScheduler();
+                scheduler.scheduleJob(jobDetail, trigger);//添加订单定时任务
+            } catch (SchedulerException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public Integer cancelOrder(Order order) {
+        try {//删除对应订单的定时任务
+            Scheduler scheduler = schedulerFactoryBean.getScheduler();
+            scheduler.unscheduleJob(new TriggerKey(order.getOid(),"orderGroup"));
+        } catch (SchedulerException e) {
+            throw new RuntimeException(e);
+        }
+        return orderDao.cancelOrder(order);
+    }
+
+    @Override
+    public Integer updateOrderStatue(Order order) {
+        return null;
+    }
+
+    @Override
+    public Order searchOrder(String oid) {
+        QueryWrapper<Order> queryWrapper=new QueryWrapper<Order>().eq("oid",oid);
+        Order order = orderDao.selectOne(queryWrapper);
+        addOrderOtherInf(order);
+        return order;
+    }
 
     @Override
     public List<Order> getOrderList(String oid, String uid, String orderFilter, Integer page, Integer count) {
@@ -48,21 +111,7 @@ public class OrderServiceImpl implements IOrderService {
         }
         list = orderDao.selectPage(p, queryWrapper).getRecords();
         for (Order order : list) {
-            Address address = addressDao.selectOne(new QueryWrapper<Address>().eq("id", order.getAid()));
-            List<OrderBook> books = orderBookDao.selectList(new QueryWrapper<OrderBook>().eq("oid", order.getOid()));
-            for (OrderBook orderBook : books) {
-                Book book = bookDao.selectOne(new QueryWrapper<Book>().eq("bid", orderBook.getBid()));
-                byte[] image = book.getImage();
-                String imageString = "";
-                if (image != null) {
-                    imageString = ImageUtils.encodeImageString(image);
-                }
-                book.setImageString(imageString);
-                book.setImage(null);
-                orderBook.setBook(book);
-            }
-            order.setAddress(address);
-            order.setBooks(books);
+            addOrderOtherInf(order);
         }
         return list;
     }
@@ -82,5 +131,23 @@ public class OrderServiceImpl implements IOrderService {
             queryWrapper.and(wrapper -> wrapper.eq("status", 4).or().eq("status", 5));
         }
         return orderDao.selectCount(queryWrapper);
+    }
+
+    public void addOrderOtherInf(Order order){
+        Address address = addressDao.selectOne(new QueryWrapper<Address>().eq("id", order.getAid()));
+        List<OrderBook> books = orderBookDao.selectList(new QueryWrapper<OrderBook>().eq("oid", order.getOid()));
+        for (OrderBook orderBook : books) {
+            Book book = bookDao.selectOne(new QueryWrapper<Book>().eq("bid", orderBook.getBid()));
+            byte[] image = book.getImage();
+            String imageString = "";
+            if (image != null) {
+                imageString = ImageUtils.encodeImageString(image);
+            }
+            book.setImageString(imageString);
+            book.setImage(null);
+            orderBook.setBook(book);
+        }
+        order.setAddress(address);
+        order.setBooks(books);
     }
 }
