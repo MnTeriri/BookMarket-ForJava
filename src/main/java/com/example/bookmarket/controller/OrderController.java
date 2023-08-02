@@ -39,4 +39,18 @@ public class OrderController {
         return "{\"totalPage\":" + totalPage +
                 ",\"orderList\":" + JSON.toJSONString(orderList) + "}";
     }
+
+    @RequestMapping(value = "/createOrder", produces = "application/json;charset=utf-8", method = {RequestMethod.POST, RequestMethod.GET})
+    public String createOrder(Integer id) {
+        Order order = new Order();
+        orderService.createOrder(order);
+        return "";
+    }
+
+    @RequestMapping(value = "/payOrder", produces = "application/json;charset=utf-8", method = {RequestMethod.POST, RequestMethod.GET})
+    public String payOrder(Integer id) {
+        Order order = new Order();
+        orderService.cancelOrder(order);
+        return "";
+    }
 }
