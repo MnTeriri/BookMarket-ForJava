@@ -12,4 +12,8 @@ public interface IOrderDao extends BaseMapper<Order> {
 
     @Select("SELECT COUNT(id) FROM `Order` WHERE oid LIKE CONCAT('%', #{oid}, '%') AND uid=#{uid} AND status=#{status}")
     public Long getRecordsFilteredByStatus(String oid, String uid, Integer status);
+
+    public Integer createOrder(Order order);
+
+    public Integer cancelOrder(Order order);
 }
