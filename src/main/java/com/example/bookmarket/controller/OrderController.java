@@ -21,13 +21,8 @@ public class OrderController {
     @Autowired
     private IOrderService orderService;
 
-    @RequestMapping(value = "/getNotPayAndNotReceiveCartCount", produces = "application/json;charset=utf-8", method = {RequestMethod.POST, RequestMethod.GET})
-    public String getNotPayAndNotReceiveCartCount() {
-        return "";
-    }
-
     @RequestMapping(value = "/orderList", produces = "application/json;charset=utf-8", method = {RequestMethod.POST, RequestMethod.GET})
-    public String orderList(String oid,String orderFilter,Integer page) {
+    public String orderList(String oid, String orderFilter, Integer page) {
         Long recordsFiltered = orderService.getRecordsByOidAndUidAndStatus(oid, "123456789", orderFilter);
         List<Order> orderList = orderService.getOrderList(oid, "123456789", orderFilter, page, 5);
         long totalPage = 0L;//计算总页数，一页显示5条数据
@@ -41,10 +36,12 @@ public class OrderController {
     }
 
     @RequestMapping(value = "/createOrder", produces = "application/json;charset=utf-8", method = {RequestMethod.POST, RequestMethod.GET})
-    public String createOrder(Integer id) {
-        Order order = new Order();
-        orderService.createOrder(order);
-        return "";
+    public String createOrder(Order order) {
+//        String uid = ((User) session.getAttribute("user")).getUid();
+        order.setUid("123456789");
+        Integer result = orderService.createOrder(order);
+        return "{\"result\":" + result +
+                ",\"order\":" + JSON.toJSONString(order) + "}";
     }
 
     @RequestMapping(value = "/payOrder", produces = "application/json;charset=utf-8", method = {RequestMethod.POST, RequestMethod.GET})
