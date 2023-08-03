@@ -13,6 +13,10 @@ public interface ICartService {
 
     public Long getTotalCartCount(String uid);
 
+    public String updateCartSelect(Cart cart);
+
+    public String updateAllCartSelect(Cart cart);
+
     public String addCartCount(Cart cart);
 
     public String subCartCount(Cart cart);
