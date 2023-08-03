@@ -36,9 +36,6 @@ public class AddressServiceImpl implements IAddressService {
 
     @Override
     public Address searchDefaultAddress(String uid) {
-        QueryWrapper<Address> queryWrapper = new QueryWrapper<Address>()
-                .eq("uid", uid)
-                .eq("is_default", 1);
-        return addressDao.selectOne(queryWrapper);
+        return addressDao.searchDefaultAddress(uid);
     }
 }
