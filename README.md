@@ -67,3 +67,8 @@
 * 实现了OrderJob类的execute()，使用JobExecutionContext对象的getJobDetail()获取JobDetail对象，再使用getJobDataMap()获取JobDataMap对象
   该对象就是创建定时任务时为JobDetail对象添加的数据，在这里我给他添加了订单号，获取后调用OrderService对象的searchOrder()搜索最新的订单状态，
   当订单还未付款，则调用OrderDao的cancelOrder()取消订单（还未实现），并打印相应消息
+
+### 2023/8/3
+* 添加了AddressService，用于实现地址信息的操作，目前实现了searchDefaultAddress()，用于搜索用户的默认地址
+* 实现了购物车全选功能，给CartController、CartService、CartDAO添加了selectAllCart()方法（由于UpdateWrapper没法连接查询，这里用@Update()注解编写自定义sql）
+* CartController的getCartList()进行功能添加，现在把用户默认地址信息进行查询并返回给表示层
