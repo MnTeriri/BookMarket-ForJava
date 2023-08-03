@@ -53,7 +53,7 @@ public class OrderServiceImpl implements IOrderService {
                     .withIdentity(order.getOid(), "orderGroup")
                     .usingJobData("orderOid", order.getOid())
                     .build();
-            LocalDateTime localDateTime = LocalDateTime.now().plusSeconds(5);
+            LocalDateTime localDateTime = LocalDateTime.now().plusSeconds(10);
             Trigger trigger = TriggerBuilder.newTrigger()
                     .withIdentity(order.getOid(), "orderGroup")
                     .startAt(Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant()))
