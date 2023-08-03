@@ -2,8 +2,10 @@ package com.example.bookmarket.dao;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.example.bookmarket.model.Cart;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.ResultType;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
@@ -22,4 +24,15 @@ public interface ICartDao extends BaseMapper<Cart> {
     @Select("SELECT COUNT(Cart.id) FROM Cart INNER JOIN Book ON Cart.bid = Book.bid " +
             "WHERE uid=#{uid} AND Book.status=0 AND Book.count>=Cart.count")
     public Long getTotalCartCount(String uid);
+
+    /**
+     * 对购物车全选或者取消全选时，需要过滤掉
+     * 1、书籍状态不为正常状态
+     * 2、书籍数量比购物车数量少的
+     * 这些购物车信息是异常信息
+     */
+    @Update("UPDATE Cart INNER JOIN Book ON Cart.bid = Book.bid " +
+            "SET Cart.selected=#{cart.selected},Cart.add_time=now() " +
+            "WHERE Cart.uid=#{cart.uid} AND Book.status=0 AND Book.count>=Cart.count")
+    public boolean updateAllCartSelected(@Param("cart") Cart cart);
 }
