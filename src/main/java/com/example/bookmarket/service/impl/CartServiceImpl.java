@@ -82,6 +82,35 @@ public class CartServiceImpl implements ICartService {
     }
 
     @Override
+    public String updateCartSelect(Cart cart) {
+        cart=cartDao.selectById(cart.getId());
+        if (cart == null) {
+            return "-3";//未知错误
+        }
+        Book book = bookDao.selectOne(new QueryWrapper<Book>().eq("bid",cart.getBid()));
+        if (book.getStatus() != 0) {//书籍状态不正常，不允许修改购物车选中状态
+            return "-2";
+        }
+        if (cart.getSelected() == 0) {
+            cart.setSelected(1);
+        } else {
+            cart.setSelected(0);
+        }
+        if (cartDao.updateById(cart)==1) {
+            return "1";
+        }
+        return "-1";
+    }
+
+    @Override
+    public String updateAllCartSelect(Cart cart) {
+        if(cartDao.updateAllCartSelected(cart)){
+            return "1";
+        }
+        return "-1";
+    }
+
+    @Override
     public String addCartCount(Cart cart) {
         Cart data = cartDao.selectById(cart.getId());
         if (data == null) {
