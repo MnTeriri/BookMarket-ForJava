@@ -8,6 +8,9 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface IAddressDao extends BaseMapper<Address> {
+    @Select("SELECT * FROM Address WHERE id=#{aid}")
+    public Address searchById(Integer aid);
+
     @Update("UPDATE Address SET is_default=0 WHERE uid=#{uid}")
     public boolean updateAddressDefault(String uid);
 
