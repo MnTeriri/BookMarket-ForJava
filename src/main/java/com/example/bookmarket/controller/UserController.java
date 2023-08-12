@@ -31,7 +31,6 @@ public class UserController {
         Integer flag = 1;
         String userJSON = "";
         if (respCode.equals("1")) {
-            System.out.println(1111);
             user = userService.searchUser(uid);
             flag = user.getFlag();
             session.setAttribute("user", user);
