@@ -6,6 +6,7 @@ import com.example.bookmarket.model.Book;
 import com.example.bookmarket.model.User;
 import com.example.bookmarket.service.IBookService;
 import com.example.bookmarket.service.ICartService;
+import com.example.bookmarket.service.IOrderService;
 import com.example.bookmarket.service.IUserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,9 +26,11 @@ class BookMarketApplicationTests {
     private ICartService cartService;
     @Autowired
     private IOrderDao orderDao;
+    @Autowired
+    private IOrderService orderService;
     @Test
     void contextLoads() {
-        System.out.println(orderDao.getRecordsFilteredByStatus("","123456789",0));
+        System.out.println(orderService.searchOrder("20230809004041948743"));
     }
 
 }
