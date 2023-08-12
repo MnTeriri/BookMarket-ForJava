@@ -23,17 +23,7 @@ public class BookServiceImpl implements IBookService {
 
     @Override
     public Book searchBook(String bid) {
-        QueryWrapper<Book> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("bid", bid);
-        Book book = bookDao.selectOne(queryWrapper);
-        byte[] image = book.getImage();
-        String imageString = "";
-        if (image != null) {
-            imageString = ImageUtils.encodeImageString(image);
-        }
-        book.setImageString(imageString);
-        book.setImage(null);
-        return book;
+        return bookDao.searchBookByBid(bid);
     }
 
     @Override
