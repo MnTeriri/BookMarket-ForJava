@@ -2,15 +2,21 @@ package com.example.bookmarket.dao;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.example.bookmarket.model.Cart;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.ResultType;
-import org.apache.ibatis.annotations.Select;
-import org.apache.ibatis.annotations.Update;
+import org.apache.ibatis.annotations.*;
+import org.apache.ibatis.type.JdbcType;
 import org.springframework.stereotype.Repository;
-import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Repository
 public interface ICartDao extends BaseMapper<Cart> {
+    @Select("SELECT * FROM Cart WHERE uid=#{uid}")
+    @Results({
+            @Result(property = "bid", column = "bid", javaType = String.class, jdbcType = JdbcType.VARCHAR),
+            @Result(property = "book", column = "bid", one = @One(select = "com.example.bookmarket.dao.IBookDao.searchBookByBid"))
+    })
+    public List<Cart> getCartList(@Param("uid") String uid);
+
     /**
      * 查询购物车选中数量和总数时，需要过滤掉
      * 1、书籍状态不为正常状态
