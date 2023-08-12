@@ -19,6 +19,11 @@ public class QuartzConfig {
         schedulerFactoryBean.setStartupDelay(1);
         // 设置调度器的应用程序上下文调度器上下文键为 "applicationContext"
         schedulerFactoryBean.setApplicationContextSchedulerContextKey("applicationContext");
+
+        AutowiringSpringBeanJobFactory jobFactory = new AutowiringSpringBeanJobFactory();
+        jobFactory.setApplicationContext(SpringContextUtils.applicationContext);
+        schedulerFactoryBean.setJobFactory(jobFactory);
+
         return schedulerFactoryBean;
     }
 }
