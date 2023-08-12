@@ -47,11 +47,9 @@ public class CartServiceImpl implements ICartService {
 
     @Override
     public List<Cart> getCartList(String uid) {
-        QueryWrapper<Cart> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("uid", uid);
-        List<Cart> cartList = cartDao.selectList(queryWrapper);
+        List<Cart> cartList = cartDao.getCartList(uid);
         for (Cart cart : cartList) {
-            Book book = bookDao.selectOne(new QueryWrapper<Book>().eq("bid", cart.getBid()));
+            Book book = cart.getBook();
             UpdateWrapper<Cart> updateWrapper = new UpdateWrapper<Cart>().
                     set("selected", 0).eq("id", cart.getId());
             if (cart.getCount() > book.getCount() || book.getStatus() != 0) {
@@ -59,13 +57,6 @@ public class CartServiceImpl implements ICartService {
                 //如果查询出的购物车商品状态为下架或者缺货，需要取消该购物车选择，此条购物车信息是错误信息
                 cartDao.update(null, updateWrapper);
             }
-            byte[] image = book.getImage();
-            String imageString = "";
-            if (image != null) {
-                imageString = ImageUtils.encodeImageString(image);
-            }
-            book.setImageString(imageString);
-            book.setImage(null);
             cart.setBook(book);
         }
         return cartList;
