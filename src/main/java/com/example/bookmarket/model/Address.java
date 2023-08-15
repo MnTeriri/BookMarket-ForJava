@@ -6,11 +6,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @TableName("Address")
-public class Address {
+public class Address implements Serializable {
     private Integer id;//地址编号
     private String uid;//用户编号
     private String province;//省
