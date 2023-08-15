@@ -7,10 +7,19 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class SpringContextUtils implements ApplicationContextAware {
-    public static ApplicationContext applicationContext;
+    public static ApplicationContext context;
 
     @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        SpringContextUtils.applicationContext = applicationContext;
+    public void setApplicationContext(ApplicationContext context) throws BeansException {
+        SpringContextUtils.context = context;
+    }
+
+    public static <T> T getBean(Class<T> tClass) {
+        return context.getBean(tClass);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> T getBean(String name) {
+        return (T) context.getBean(name);
     }
 }
