@@ -7,7 +7,7 @@ import com.example.bookmarket.service.IAddressService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class AddressServiceImpl implements IAddressService {
@@ -15,8 +15,9 @@ public class AddressServiceImpl implements IAddressService {
     private IAddressDao addressDao;
 
     @Override
-    public ArrayList<Address> findAddress(String uid) {
-        return null;
+    public List<Address> getAddressList(String uid) {
+        QueryWrapper<Address> queryWrapper = new QueryWrapper<Address>().eq("uid", uid);
+        return addressDao.selectList(queryWrapper);
     }
 
     @Override
