@@ -2,10 +2,10 @@ package com.example.bookmarket.service;
 
 import com.example.bookmarket.model.Address;
 
-import java.util.ArrayList;
+import java.util.List;
 
 public interface IAddressService {
-    public ArrayList<Address> findAddress(String uid);
+    public List<Address> getAddressList(String uid);
 
     public String addAddress(Address address);
 
