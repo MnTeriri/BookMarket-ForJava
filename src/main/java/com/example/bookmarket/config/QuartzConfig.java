@@ -21,7 +21,7 @@ public class QuartzConfig {
         schedulerFactoryBean.setApplicationContextSchedulerContextKey("applicationContext");
 
         AutowiringSpringBeanJobFactory jobFactory = new AutowiringSpringBeanJobFactory();
-        jobFactory.setApplicationContext(SpringContextUtils.applicationContext);
+        jobFactory.setApplicationContext(SpringContextUtils.context);
         schedulerFactoryBean.setJobFactory(jobFactory);
 
         return schedulerFactoryBean;
