@@ -329,3 +329,98 @@ public class ImageUtils extends BaseTypeHandler<String> {
     }
 }
 ~~~
+
+### 2023/8/15
+
+* 对Mybatis添加了二级缓存，现在可使用Redis当作缓存，提高部分查询效率（尤其是订单查询）
+* RedisConfig（用于配置Redis），代码如下：
+~~~Java
+@Configuration
+@EnableCaching
+public class RedisConfig {
+    @Bean
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
+        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
+        redisTemplate.setConnectionFactory(redisConnectionFactory);
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
+        redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+        redisTemplate.setHashKeySerializer(new StringRedisSerializer());
+        redisTemplate.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
+        return redisTemplate;
+    }
+}
+~~~
+
+* RedisCache，用于实现Mybatis的Cache接口，二级缓存自定义实现类，常规项目应该有多个，代码如下：
+~~~Java
+public class RedisCache implements Cache {
+    private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+    private final String id; // RedisCache实例Id
+    private RedisTemplate<String, Object> redisTemplate;
+    private static final long EXPIRE_TIME_IN_MINUTES = 5; // redis过期时间
+
+    public RedisCache(String id) {
+        if (id == null) {
+            throw new IllegalArgumentException("Cache instances require an ID");
+        }
+        this.id = id;
+    }
+
+    @Override
+    public String getId() {
+        return id;
+    }
+
+    @Override
+    public void putObject(Object key, Object value) {
+        redisTemplate = getRedisTemplate();
+        ValueOperations<String, Object> opsForValue = redisTemplate.opsForValue();
+        opsForValue.set(key.toString(), value, EXPIRE_TIME_IN_MINUTES, TimeUnit.MINUTES);
+    }
+
+    @Override
+    public Object getObject(Object key) {
+        redisTemplate = getRedisTemplate();
+        ValueOperations<String, Object> opsForValue = redisTemplate.opsForValue();
+        return opsForValue.get(key.toString());
+    }
+
+    @Override
+    public Object removeObject(Object key) {
+        redisTemplate = getRedisTemplate();
+        ValueOperations<String, Object> opsForValue = redisTemplate.opsForValue();
+        Object deleteObj = opsForValue.get(key.toString());
+        redisTemplate.delete(key.toString());
+        return deleteObj;
+    }
+
+    @Override
+    public void clear() {
+        redisTemplate = getRedisTemplate();
+        redisTemplate.execute((RedisCallback<Object>) connection -> {
+            connection.flushDb();
+            return null;
+        });
+    }
+
+    @Override
+    public int getSize() {
+        return 0;
+    }
+
+    @Override
+    public ReadWriteLock getReadWriteLock() {
+        return readWriteLock;
+    }
+
+    private RedisTemplate<String, Object> getRedisTemplate() {
+        if (redisTemplate == null) {
+            redisTemplate = SpringContextUtils.getBean("redisTemplate");
+        }
+        return redisTemplate;
+    }
+}
+~~~
+* 需要使用二级缓存的Dao，加入注解@CacheNamespace(implementation = RedisCache.class)
+* 如果有些方法不想使用缓存，使用注解@Options(useCache = false)
+* 如果有些方法想清空缓存，使用注解@Options(flushCache = Options.FlushCachePolicy.TRUE)
