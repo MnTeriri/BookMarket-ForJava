@@ -8,7 +8,7 @@ import java.util.ArrayList;
 public class JdbcUtils {
     private static final String url = "jdbc:mysql://localhost:3306/database_achieve_class_design?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=GMT%2B8";
     private static final String user = "root";
-    private static final String password = "lsy12345";
+    private static final String password = "root";
     private static Connection connection = null;
     static {
         try {

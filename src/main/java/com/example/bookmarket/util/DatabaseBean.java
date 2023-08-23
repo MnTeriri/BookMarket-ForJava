@@ -9,7 +9,7 @@ public class DatabaseBean {
     private static final String driver = "com.mysql.cj.jdbc.Driver";
     private static final String url = "jdbc:mysql://localhost:3306/database_achieve_class_design?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=GMT%2B8";
     private static final String user = "root";
-    private static final String password = "lsy12345";
+    private static final String password = "root";
     private static Connection connection = null;
     private static Statement statement = null;
 
