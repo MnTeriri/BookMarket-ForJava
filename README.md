@@ -22,6 +22,51 @@
 * ...
 
 ## 界面效果
+* 这里放几个典型界面供参考
+
+### 登录/注册界面
+![图片](image/img.png)
+<div align="center">登录界面</div>
+
+![图片](image/img_1.png)
+<div align="center">注册界面</div>
+
+![图片](image/img_2.png)
+<div align="center">登录界面（输入数据不合法）</div>
+
+![图片](image/img_3.png)
+<div align="center">登录界面（登录成功）</div>
+
+### 主页
+![图片](image/img_4.png)
+<div align="center">主界面</div>
+
+![图片](image/img_5.png)
+<div align="center">书籍页面（上）</div>
+
+![图片](image/img_6.png)
+<div align="center">书籍页面（下）</div>
+
+### 购物车
+![图片](image/img_7.png)
+<div align="center">购物车</div>
+
+![图片](image/img_8.png)
+<div align="center">购物车（点击结算后）</div>
+
+### 个人中心
+![图片](image/img_9.png)
+<div align="center">个人中心</div>
+
+![图片](image/img_10.png)
+<div align="center">个人中心（地址信息）</div>
+
+![图片](image/img_11.png)
+<div align="center">个人中心（订单信息 上）</div>
+
+![图片](image/img_12.png)
+<div align="center">个人中心（订单信息 下）</div>
+
 
 ## 数据库设计
 * 该项目数据库结构为本人自主设计，采用MySQL数据库，设计过程严格按照数据库设计规范，E-R图如下：
