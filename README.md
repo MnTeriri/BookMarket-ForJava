@@ -58,9 +58,6 @@
 ![图片](image/img_9.png)
 <div align="center">个人中心</div>
 
-![图片](image/img_10.png)
-<div align="center">个人中心（地址信息）</div>
-
 ![图片](image/img_11.png)
 <div align="center">个人中心（订单信息 上）</div>
 
