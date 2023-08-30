@@ -9,13 +9,188 @@
 * 购物车系统
 * 订单系统（可退货可取消）
 * 用户基本信息管理
-* ...（没想好，后面再改）
+* ...
 
 ## 使用的框架
 
 * SpringBoot
+* Mybatis
 * Mybatis-Plus
-* ...（没想好，后面再改）
+* Redis
+* Quartz
+* Vue
+* ...
+
+## 界面效果
+
+## 数据库设计
+* 该项目数据库结构为本人自主设计，采用MySQL数据库，设计过程严格按照数据库设计规范，E-R图如下：
+![图片](image/er.png)
+* 建立数据库代码如下：
+~~~mysql
+CREATE TABLE User(
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    uid CHAR(9)     NOT NULL,#用户编号
+    uname VARCHAR(50) NOT NULL,
+    password CHAR(32) DEFAULT 'e10adc3949ba59abbe56e057f20f883e',#默认密码123456（MD5加密）
+    flag TINYINT NOT NULL DEFAULT 1,# 0为商家账号，1为客户账号
+    status INT NOT NULL DEFAULT 1,# 0为假删除
+    image    MEDIUMBLOB,#用户头像
+    constraint user_uid_uindex unique (uid)#设置uid的唯一索引
+);
+
+CREATE TABLE Address(
+    id INT PRIMARY KEY AUTO_INCREMENT,#地址编号
+    uid CHAR(9) NOT NULL,#用户编号
+    province VARCHAR(20) NOT NULL,#省
+    city VARCHAR(20) NOT NULL,#市
+    district VARCHAR(20) NOT NULL,#区
+    address VARCHAR(100) NOT NULL,#详细地址
+    receiver_name VARCHAR(20) NOT NULL,#收件人
+    phone CHAR(11) NOT NULL,#电话号码
+    is_default INT NOT NULL DEFAULT 0,#默认不选中 1为选中
+    status int  NOT NULL DEFAULT 1,# 0为假删除
+    CONSTRAINT fk_address_user_uid FOREIGN KEY (uid) REFERENCES User (uid)#地址表uid字段参照user表uid字段
+);
+
+
+CREATE TABLE Category(
+    id INT PRIMARY KEY AUTO_INCREMENT,#分类id
+    cname VARCHAR(50)#图书分类名称
+);
+
+CREATE TABLE Book(
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    bid CHAR(13) NOT NULL,#图书编号
+    cid INT NOT NULL,#图书分类，参考Category的主键
+    bname VARCHAR(255) NOT NULL,#图书名称
+    author VARCHAR(255) NOT NULL,#作者名称
+    publisher VARCHAR(255) NOT NULL,#出版社名称
+    publish_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,#出版时间
+    image MEDIUMBLOB,#书籍图片
+    price  DECIMAL(13, 3) NOT NULL DEFAULT 0,#价格
+    discount DECIMAL(3, 2)  NOT NULL DEFAULT 1,#折扣
+    count INT NOT NULL DEFAULT 0,#数量
+    description TEXT,#图书描述
+    status INT NOT NULL DEFAULT 0,#图书状态 0正常、1缺货、2下架
+    CONSTRAINT fk_book_category_cid FOREIGN KEY (cid) REFERENCES Category (id),# book表cid参照category表id字段
+    CONSTRAINT book_bid_uindex UNIQUE (bid)# bid设置唯一索引
+);
+
+
+CREATE TABLE Storage(
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    bid CHAR(13) NOT NULL,#图书编号
+    uid CHAR(9)  NOT NULL,#用户编号
+    amount INT NOT NULL DEFAULT 0,#数量
+    status int NOT NULL DEFAULT 0,#状态 0入库、1卖出、2退货、3取消订单
+    time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,#操作时间
+    CONSTRAINT fk_storage_book_bid FOREIGN KEY (bid) REFERENCES Book (bid), # storage表bid参照book表bid字段
+    CONSTRAINT fk_storage_user_uid FOREIGN KEY (uid) REFERENCES User (uid) # storage表uid参照user表uid字段
+);
+
+CREATE TABLE Cart(
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    uid CHAR(9)  NOT NULL,#用户编号
+    bid CHAR(13) NOT NULL,#图书编号
+    count int DEFAULT 1,#选购数量
+    add_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,#加购时间
+    selected INT NOT NULL DEFAULT 0,# 0为未选购，1为选购
+    CONSTRAINT fk_cart_user_uid FOREIGN KEY (uid) REFERENCES User (uid), # cart表uid参照user表uid字段
+    CONSTRAINT fk_cart_book_bid FOREIGN KEY (bid) REFERENCES Book (bid) # cart表bid参照book表bid字段
+);
+
+CREATE TABLE `Order`(
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    oid CHAR(20) NOT NULL,#订单编号
+    uid CHAR(9) NOT NULL,#用户编号
+    aid int NOT NULL,#地址编号
+    price DECIMAL(13, 3) NOT NULL DEFAULT 0,#总金额
+    status INT NOT NULL DEFAULT 0,#订单状态 0待付款、1已付款、2已发货、3交易成功、4交易取消、5退货、6退货成功
+    created_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,#创建时间
+    pay_time DATETIME,#付款时间
+    send_time DATETIME,#发货时间
+    finish_time DATETIME,#完成时间
+    CONSTRAINT fk_order_user_uid FOREIGN KEY (uid) REFERENCES User (uid), # order表uid参照user表uid字段
+    CONSTRAINT fk_order_address_id FOREIGN KEY (aid) REFERENCES Address (id), # order表aid参照address表id字段
+    CONSTRAINT order_oid_uindex UNIQUE (oid) # oid设置唯一索引
+);
+
+CREATE TABLE Order_Book(
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    oid CHAR(20) NOT NULL,#订单编号
+    bid CHAR(13) NOT NULL,#图书编号
+    count INT NOT NULL DEFAULT 1,#选购数量
+    price DECIMAL(13, 3) NOT NULL DEFAULT 0,#价格
+    discount DECIMAL(3, 2)  NOT NULL DEFAULT 1,#折扣
+    CONSTRAINT fk_order_book_order_oid FOREIGN KEY (oid) REFERENCES `Order`(oid), # order_book表oid参照order表oid字段
+    CONSTRAINT fk_order_book_book_bid FOREIGN KEY (bid) REFERENCES Book(bid) # order_book表bid参照book表bid字段
+);
+~~~
+* 存储过程代码如下（以创建订单为例）：
+~~~mysql
+CREATE PROCEDURE create_order(IN v_oid CHAR(20), IN v_uid CHAR(9), IN v_aid INT, OUT v_result INT)
+BEGIN
+    DECLARE done INT DEFAULT 0;
+    DECLARE result INT DEFAULT 1; # 1成功、-4SQL语句出错、-3购物车为空、-2书籍缺货或者下架、-1书籍数量不够
+    DECLARE total_price DECIMAL(13, 3) DEFAULT 0;
+    DECLARE c_bid CHAR(13);#购物车bid
+    DECLARE c_count INT DEFAULT 0;#购物车书籍数量
+    DECLARE b_count INT DEFAULT 0;#书籍数量
+    DECLARE b_price DECIMAL(13, 3);#书籍价格
+    DECLARE b_discount DECIMAL(3, 2);#书籍折扣
+    DECLARE b_status INT DEFAULT 0;#书籍状态
+    DECLARE total_count INT DEFAULT 0;#购物车已选中书籍个数
+    DECLARE cursor_cart CURSOR FOR SELECT bid, count FROM Cart WHERE uid = v_uid AND selected = 1;
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+    DECLARE CONTINUE HANDLER FOR SQLWARNING, SQLEXCEPTION SET result = -4; # SQL语句出错，退出并回滚
+
+    SELECT COUNT(1) INTO total_count FROM Cart WHERE uid = v_uid AND selected = 1;#查询购物车选中商品个数
+
+    IF total_count != 0 THEN
+        START TRANSACTION;
+        OPEN cursor_cart;
+        label:REPEAT
+            FETCH cursor_cart INTO c_bid,c_count;
+            IF NOT done THEN
+                SELECT count, price, discount, status INTO b_count,b_price,b_discount,b_status FROM Book WHERE bid = c_bid;
+                IF b_status != 0 THEN
+                    SET result = -2;#书籍处于缺货或者下架，退出循环并回滚
+                    LEAVE label;
+                END IF;
+                IF b_count >= c_count THEN
+                    SELECT * FROM Book WHERE bid = c_bid FOR UPDATE;#给Book表加行级锁
+                    IF b_count = c_count THEN#更新书籍数量
+                        UPDATE Book SET count=0, status=1 WHERE bid = c_bid;#数量正好够，修改书籍数量、状态
+                    ELSE
+                        UPDATE Book SET count=count - c_count WHERE bid = c_bid;#数量够，修改书籍数量
+                    END IF;
+                    INSERT INTO Storage(bid, uid, amount, status) VALUES (c_bid, v_uid, c_count, 1);#添加书籍存储信息
+                    INSERT INTO Order_Book(oid, bid, count, price, discount)
+                    VALUES (v_oid, c_bid, c_count, b_price, b_discount);#添加订单书籍表数据
+                    DELETE FROM Cart WHERE uid = v_uid AND bid = c_bid;#删除对应购物车数据
+                    SET total_price = total_price + c_count * b_price * b_discount;#计算订单总价格
+                ELSE
+                    SET result = -1;#书的数量不够，退出循环并回滚
+                    LEAVE label;
+                END IF;
+            END IF;
+        UNTIL done
+            END REPEAT label;
+        CLOSE cursor_cart;
+    ELSE
+        SET result=-3;
+    END IF;
+
+    IF result = 1 THEN
+        INSERT INTO `Order`(oid, uid, aid, price) VALUES (v_oid, v_uid, v_aid, total_price);
+        COMMIT;
+    ELSE
+        ROLLBACK;#如果result!=1，创建订单失败，回滚
+    END IF;
+    SET v_result = result;
+END;
+~~~
 
 ## 项目进展
 
