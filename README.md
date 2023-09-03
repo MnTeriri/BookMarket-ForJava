@@ -68,7 +68,7 @@
 ## 数据库设计
 * 该项目数据库结构为本人自主设计，采用MySQL数据库，设计过程严格按照数据库设计规范，E-R图如下：
 ![图片](image/er.png)
-* 建立数据库代码如下：
+* 建立数据库代码如下（部分）：
 ~~~mysql
 CREATE TABLE User(
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -96,11 +96,6 @@ CREATE TABLE Address(
 );
 
 
-CREATE TABLE Category(
-    id INT PRIMARY KEY AUTO_INCREMENT,#分类id
-    cname VARCHAR(50)#图书分类名称
-);
-
 CREATE TABLE Book(
     id INT PRIMARY KEY AUTO_INCREMENT,
     bid CHAR(13) NOT NULL,#图书编号
@@ -119,29 +114,6 @@ CREATE TABLE Book(
     CONSTRAINT book_bid_uindex UNIQUE (bid)# bid设置唯一索引
 );
 
-
-CREATE TABLE Storage(
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    bid CHAR(13) NOT NULL,#图书编号
-    uid CHAR(9)  NOT NULL,#用户编号
-    amount INT NOT NULL DEFAULT 0,#数量
-    status int NOT NULL DEFAULT 0,#状态 0入库、1卖出、2退货、3取消订单
-    time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,#操作时间
-    CONSTRAINT fk_storage_book_bid FOREIGN KEY (bid) REFERENCES Book (bid), # storage表bid参照book表bid字段
-    CONSTRAINT fk_storage_user_uid FOREIGN KEY (uid) REFERENCES User (uid) # storage表uid参照user表uid字段
-);
-
-CREATE TABLE Cart(
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    uid CHAR(9)  NOT NULL,#用户编号
-    bid CHAR(13) NOT NULL,#图书编号
-    count int DEFAULT 1,#选购数量
-    add_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,#加购时间
-    selected INT NOT NULL DEFAULT 0,# 0为未选购，1为选购
-    CONSTRAINT fk_cart_user_uid FOREIGN KEY (uid) REFERENCES User (uid), # cart表uid参照user表uid字段
-    CONSTRAINT fk_cart_book_bid FOREIGN KEY (bid) REFERENCES Book (bid) # cart表bid参照book表bid字段
-);
-
 CREATE TABLE `Order`(
     id INT PRIMARY KEY AUTO_INCREMENT,
     oid CHAR(20) NOT NULL,#订单编号
@@ -157,17 +129,7 @@ CREATE TABLE `Order`(
     CONSTRAINT fk_order_address_id FOREIGN KEY (aid) REFERENCES Address (id), # order表aid参照address表id字段
     CONSTRAINT order_oid_uindex UNIQUE (oid) # oid设置唯一索引
 );
-
-CREATE TABLE Order_Book(
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    oid CHAR(20) NOT NULL,#订单编号
-    bid CHAR(13) NOT NULL,#图书编号
-    count INT NOT NULL DEFAULT 1,#选购数量
-    price DECIMAL(13, 3) NOT NULL DEFAULT 0,#价格
-    discount DECIMAL(3, 2)  NOT NULL DEFAULT 1,#折扣
-    CONSTRAINT fk_order_book_order_oid FOREIGN KEY (oid) REFERENCES `Order`(oid), # order_book表oid参照order表oid字段
-    CONSTRAINT fk_order_book_book_bid FOREIGN KEY (bid) REFERENCES Book(bid) # order_book表bid参照book表bid字段
-);
+# ...
 ~~~
 * 存储过程代码如下（以创建订单为例）：
 ~~~mysql
