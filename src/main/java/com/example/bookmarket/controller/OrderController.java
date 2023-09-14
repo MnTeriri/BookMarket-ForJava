@@ -31,8 +31,7 @@ public class OrderController {
         } else {
             totalPage = recordsFiltered / 5 + 1;
         }
-        return "{\"totalPage\":" + totalPage +
-                ",\"orderList\":" + JSON.toJSONString(orderList) + "}";
+        return "{\"totalPage\":" + totalPage + ",\"orderList\":" + JSON.toJSONString(orderList) + "}";
     }
 
     @RequestMapping(value = "/createOrder", produces = "application/json;charset=utf-8", method = {RequestMethod.POST, RequestMethod.GET})
@@ -40,8 +39,7 @@ public class OrderController {
 //        String uid = ((User) session.getAttribute("user")).getUid();
         order.setUid("123456789");
         Integer result = orderService.createOrder(order);
-        return "{\"result\":" + result +
-                ",\"order\":" + JSON.toJSONString(order) + "}";
+        return "{\"result\":" + result + ",\"order\":" + JSON.toJSONString(order) + "}";
     }
 
     @RequestMapping(value = "/payOrder", produces = "application/json;charset=utf-8", method = {RequestMethod.POST, RequestMethod.GET})
@@ -49,5 +47,13 @@ public class OrderController {
         Order order = new Order();
         orderService.cancelOrder(order);
         return "";
+    }
+
+    @RequestMapping(value = "/getOrderCount", produces = "application/json;charset=utf-8", method = {RequestMethod.POST, RequestMethod.GET})
+    public String getOrderCount() {
+        //String uid = ((User) session.getAttribute("user")).getUid();
+        Long notPayOrderCount = orderService.getRecordsByOidAndUidAndStatus("", "123456789", "notPay");
+        Long notReceiveOrderCount = orderService.getRecordsByOidAndUidAndStatus("", "123456789", "notReceive");
+        return "{\"notPayOrderCount\":" + notPayOrderCount + ",\"notReceiveOrderCount\":" + notReceiveOrderCount + "}";
     }
 }
