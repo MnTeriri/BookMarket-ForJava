@@ -56,4 +56,10 @@ public class UserController {
         user.setPassword(password);
         return userService.register(user);
     }
+
+    @RequestMapping(value = "/updatePassword", produces = "application/json;charset=utf-8", method = RequestMethod.POST)
+    public String updatePassword(String oldPassword, String newPassword) {
+//        String uid = ((User) session.getAttribute("user")).getUid();
+        return userService.updateUserPassword("123456789", oldPassword, newPassword);
+    }
 }
