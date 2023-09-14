@@ -9,7 +9,7 @@ public interface IUserService {
 
     public String updateUser(User user);
 
-    public String updateUserPassword(String uid, String oldPassword, String newPassword, String reNewPassword);
+    public String updateUserPassword(String uid, String oldPassword, String newPassword);
 
     public String login(User user);
 
