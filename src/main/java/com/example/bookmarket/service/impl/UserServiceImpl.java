@@ -2,6 +2,7 @@ package com.example.bookmarket.service.impl;
 
 import cn.hutool.crypto.digest.DigestUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.example.bookmarket.dao.IUserDao;
 import com.example.bookmarket.model.User;
 import com.example.bookmarket.service.IUserService;
@@ -31,8 +32,22 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public String updateUserPassword(String uid, String oldPassword, String newPassword, String reNewPassword) {
-        return null;
+    public String updateUserPassword(String uid, String oldPassword, String newPassword) {
+        User user = new User();
+        user.setUid(uid);
+        user.setPassword(oldPassword);
+        String loginCode = login(user);
+        if (loginCode.equals("1")) {//如果老密码正确
+            UpdateWrapper<User> updateWrapper = new UpdateWrapper<User>();
+            String md5Password = DigestUtil.md5Hex(newPassword);
+            updateWrapper.set("password", md5Password).eq("uid", uid);
+            if (userDao.update(null, updateWrapper) == 1) {
+                return "1";//修改密码成功
+            } else {
+                return "-1";//修改密码失败
+            }
+        }
+        return loginCode;
     }
 
     @Override
