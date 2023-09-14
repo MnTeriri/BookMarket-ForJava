@@ -87,7 +87,7 @@ public class OrderServiceImpl implements IOrderService {
 
     @Override
     public List<Order> getOrderList(String oid, String uid, String orderFilter, Integer page, Integer count) {
-        return orderDao.getOrderList(oid, uid, orderFilter, page, count);
+        return orderDao.getOrderList(oid, uid, orderFilter, (page - 1) * count, count);
     }
 
     @Override
