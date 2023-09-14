@@ -603,3 +603,8 @@ public class RedisCache implements Cache {
 * 需要使用二级缓存的Dao，加入注解@CacheNamespace(implementation = RedisCache.class)
 * 如果有些方法不想使用缓存，使用注解@Options(useCache = false)
 * 如果有些方法想清空缓存，使用注解@Options(flushCache = Options.FlushCachePolicy.TRUE)
+
+### 2023/9/14
+
+* 更新密码功能实现
+* 用户主页现在可以显示待支付和待收货订单个数
