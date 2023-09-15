@@ -4,15 +4,21 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.example.bookmarket.dao.IAddressDao;
 import com.example.bookmarket.model.Address;
 import com.example.bookmarket.service.IAddressService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 public class AddressServiceImpl implements IAddressService {
     @Autowired
     private IAddressDao addressDao;
+
+    public AddressServiceImpl() {
+        log.debug("创建服务层实现对象：AddressServiceImpl");
+    }
 
     @Override
     public List<Address> getAddressList(String uid) {
