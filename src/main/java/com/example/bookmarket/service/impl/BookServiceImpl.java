@@ -9,17 +9,23 @@ import com.example.bookmarket.model.Book;
 import com.example.bookmarket.model.Category;
 import com.example.bookmarket.service.IBookService;
 import com.example.bookmarket.util.ImageUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 public class BookServiceImpl implements IBookService {
     @Autowired
     private IBookDao bookDao;
     @Autowired
     private ICategoryDao categoryDao;
+
+    public BookServiceImpl() {
+        log.debug("创建服务层实现对象：BookServiceImpl");
+    }
 
     @Override
     public Book searchBook(String bid) {
