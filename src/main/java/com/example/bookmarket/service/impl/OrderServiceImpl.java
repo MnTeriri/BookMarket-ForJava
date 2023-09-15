@@ -6,6 +6,7 @@ import com.example.bookmarket.dao.IOrderDao;
 import com.example.bookmarket.job.OrderJob;
 import com.example.bookmarket.model.Order;
 import com.example.bookmarket.service.IOrderService;
+import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.quartz.SchedulerFactoryBean;
@@ -16,12 +17,17 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+@Slf4j
 @Service
 public class OrderServiceImpl implements IOrderService {
     @Autowired
     private IOrderDao orderDao;
     @Autowired
     private SchedulerFactoryBean schedulerFactoryBean;
+
+    public OrderServiceImpl() {
+        log.debug("创建服务层实现对象：OrderServiceImpl");
+    }
 
     @Override
     public Integer createOrder(Order order) {
@@ -52,6 +58,7 @@ public class OrderServiceImpl implements IOrderService {
             try {
                 Scheduler scheduler = schedulerFactoryBean.getScheduler();
                 scheduler.scheduleJob(jobDetail, trigger);//添加订单定时任务
+                log.debug("订单定时任务{}添加成功", scheduler);
             } catch (SchedulerException e) {
                 throw new RuntimeException(e);
             }
