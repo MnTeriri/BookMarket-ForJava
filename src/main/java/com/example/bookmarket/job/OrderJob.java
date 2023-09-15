@@ -3,6 +3,7 @@ package com.example.bookmarket.job;
 import com.example.bookmarket.dao.IOrderDao;
 import com.example.bookmarket.model.Order;
 import com.example.bookmarket.service.IOrderService;
+import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @Component
 public class OrderJob implements Job {
     @Autowired
@@ -29,12 +31,12 @@ public class OrderJob implements Job {
             orderDao.cancelOrder(data);//取消订单
             Integer result = (Integer) data.get("result");
             if (result == 1) {
-                System.out.println("当前时间：" + jobExecutionContext.getFireTime() + "，订单：" + oid + "付款超时，被取消！");
+                log.debug("当前时间：{}，订单：{}付款超时，被取消！", jobExecutionContext.getFireTime(), oid);
             } else {
-                System.out.println("取消订单执行出错！");
+                log.debug("订单：{}，取消订单执行出错！", oid);
             }
         } else {
-            System.out.println("订单已付款或已取消！");
+            log.debug("订单：{}，订单已付款或已取消！", oid);
         }
     }
 }
