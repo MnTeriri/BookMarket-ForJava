@@ -1,11 +1,17 @@
 package com.example.bookmarket.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.quartz.SchedulerFactoryBean;
 
+@Slf4j
 @Configuration
 public class QuartzConfig {
+    public QuartzConfig() {
+        log.debug("创建配置类对象：QuartzConfig");
+    }
+
     @Bean
     public SchedulerFactoryBean schedulerFactoryBean() {
         SchedulerFactoryBean schedulerFactoryBean = new SchedulerFactoryBean();
