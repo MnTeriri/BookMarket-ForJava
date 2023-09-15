@@ -11,6 +11,9 @@
 * 用户基本信息管理
 * ...
 
+Vue项目说明：[BookMarket-ForVue](https://github.com/MnTeriri/BookMarket-ForVue)  
+后台管理系统项目说明：[BookMarket-ForCpp](https://github.com/MnTeriri/BookMarket-ForCpp)
+
 ## 使用的框架
 
 * SpringBoot
