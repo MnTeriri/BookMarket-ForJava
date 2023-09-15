@@ -608,3 +608,6 @@ public class RedisCache implements Cache {
 
 * 更新密码功能实现
 * 用户主页现在可以显示待支付和待收货订单个数
+
+### 2023/9/15
+* 添加了日志输出
