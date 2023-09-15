@@ -8,17 +8,23 @@ import com.example.bookmarket.model.Book;
 import com.example.bookmarket.model.Cart;
 import com.example.bookmarket.service.ICartService;
 import com.example.bookmarket.util.ImageUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 public class CartServiceImpl implements ICartService {
     @Autowired
     private ICartDao cartDao;
     @Autowired
     private IBookDao bookDao;
+
+    public CartServiceImpl() {
+        log.debug("创建服务层实现对象：CartServiceImpl");
+    }
 
     @Override
     public String addCart(Cart cart) {
