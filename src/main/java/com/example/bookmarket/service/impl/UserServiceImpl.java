@@ -7,17 +7,22 @@ import com.example.bookmarket.dao.IUserDao;
 import com.example.bookmarket.model.User;
 import com.example.bookmarket.service.IUserService;
 import com.example.bookmarket.util.ImageUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 
-
+@Slf4j
 @Service
 public class UserServiceImpl implements IUserService {
     @Autowired
     private IUserDao userDao;
+
+    public UserServiceImpl() {
+        log.debug("创建服务层实现对象：UserServiceImpl");
+    }
 
     @Override
     public User searchUser(String uid) {
