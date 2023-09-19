@@ -616,4 +616,5 @@ public class RedisCache implements Cache {
 * 添加了日志输出
 
 ### 2023/9/19
-* 更改了项目结构
+* 更改了项目结构 
+* 增加Spring Aop依赖，使用面向切面技术完成日志输出
