@@ -17,6 +17,7 @@
     <modules>
         <module>bookmarket-front</module>
         <module>bookmarket-admin</module>
+        <module>bookmarket-passport</module>
     </modules>
 
     <name>BookMarket</name>
