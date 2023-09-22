@@ -17,11 +17,12 @@ Vue项目说明：[BookMarket-ForVue](https://github.com/MnTeriri/BookMarket-For
 ## 使用的框架
 
 * SpringBoot
+* Spring Security
+* Spring Quartz
+* Spring Redis
 * Mybatis
 * Mybatis-Plus
-* Redis
-* Quartz
-* Vue
+* Vue3
 * ...
 
 ## 界面效果
@@ -618,3 +619,6 @@ public class RedisCache implements Cache {
 ### 2023/9/19
 * 更改了项目结构 
 * 增加Spring Aop依赖，使用面向切面技术完成日志输出
+
+### 2023/9/22
+* 新增子项目bookmarkpassport，使用Spring Security，重写之前的登录(还未完全实现)
