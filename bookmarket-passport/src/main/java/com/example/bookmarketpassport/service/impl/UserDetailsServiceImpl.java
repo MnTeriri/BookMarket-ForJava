@@ -31,7 +31,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         log.debug("用户{}信息查询成功", username);
         User user = userDao.selectOne(queryWrapper);
         user.setPassword("{bcrypt}" + new BCryptPasswordEncoder().encode(user.getPassword()));
-        System.out.println("userMsg:" + user);
         ArrayList<String> strings = new ArrayList<>();
         strings.add("admin:user");
         return new LoginUser(user, strings);
