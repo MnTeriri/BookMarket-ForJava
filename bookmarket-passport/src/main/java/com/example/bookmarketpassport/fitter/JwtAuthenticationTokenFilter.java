@@ -32,6 +32,8 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
         LoginUser loginUser = RedisUtils.getCacheObject(uid);
         if (loginUser == null) {
             log.error("没有用户：{}登录信息，不允许访问", uid);
+            filterChain.doFilter(request, response);
+            return;
         }
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(loginUser, loginUser.getUser().getPassword(), loginUser.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authenticationToken);//添加到SecurityContext上下文
