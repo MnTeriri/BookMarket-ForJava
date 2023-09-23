@@ -1,6 +1,8 @@
 package com.example.bookmarketpassport.config;
 
-import com.example.bookmarketpassport.service.UserService;
+import com.example.bookmarketpassport.fitter.JwtAuthenticationTokenFilter;
+import com.example.bookmarketpassport.service.impl.UserDetailsServiceImpl;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,12 +14,20 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+@Slf4j
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
     @Autowired
-    private UserService userService;
+    private UserDetailsServiceImpl userService;
+    @Autowired
+    private JwtAuthenticationTokenFilter jwtAuthenticationTokenFilter;
+
+    public SecurityConfig() {
+        log.debug("创建配置类对象：SecurityConfig");
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -26,7 +36,8 @@ public class SecurityConfig {
                         .requestMatchers("/TestController/test").anonymous()
                         .requestMatchers("/api/LoginController/login").anonymous()
                         .anyRequest().authenticated()
-                );
+                )
+                .addFilterBefore(jwtAuthenticationTokenFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
