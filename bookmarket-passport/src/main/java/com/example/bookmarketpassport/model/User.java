@@ -6,11 +6,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @TableName("User")
-public class User {
+public class User implements Serializable {
     private Integer id;
     private String uid;//用户号
     private String uname;//用户名
