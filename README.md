@@ -622,3 +622,6 @@ public class RedisCache implements Cache {
 
 ### 2023/9/22
 * 新增子项目bookmarkpassport，使用Spring Security，重写之前的登录(还未完全实现)
+
+### 2023/9/23
+* 完善Spring Security，现在可以登录后访问有权限的Controller
