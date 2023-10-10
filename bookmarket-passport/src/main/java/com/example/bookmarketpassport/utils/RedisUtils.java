@@ -1,9 +1,7 @@
 package com.example.bookmarketpassport.utils;
 
 import com.alibaba.fastjson2.JSON;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 
 public class RedisUtils {
     private static StringRedisTemplate stringRedisTemplate;
