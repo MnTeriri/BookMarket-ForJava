@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/user")
-@CrossOrigin(origins = "http://localhost:8080/", allowCredentials = "true")
+@CrossOrigin(origins = "http://localhost:27000/", allowCredentials = "true")
 public class UserController {
     @Autowired
     private HttpSession session;
