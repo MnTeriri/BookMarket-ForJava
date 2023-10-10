@@ -15,7 +15,7 @@ import java.io.*;
 
 @RestController
 @RequestMapping("/api/photo")
-@CrossOrigin(origins = "http://localhost:8080/", allowCredentials = "true")
+@CrossOrigin(origins = "http://localhost:27000/", allowCredentials = "true")
 public class CaptchaController {
     @Autowired
     private HttpSession session;
