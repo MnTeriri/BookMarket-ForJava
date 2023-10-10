@@ -1,31 +1,33 @@
 package com.example.bookmarketpassport.utils;
 
+import com.alibaba.fastjson2.JSON;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 
 public class RedisUtils {
-    private static RedisTemplate<String, Object> redisTemplate;
+    private static StringRedisTemplate stringRedisTemplate;
 
     public static void setCacheObject(String key, Object value) {
-        getRedisTemplate();
-        redisTemplate.opsForValue().set(key, value);
+        getStringRedisTemplate();
+        stringRedisTemplate.opsForValue().set(key, JSON.toJSONString(value));
     }
 
-    public static <T> T getCacheObject(String key) {
-        getRedisTemplate();
-        ValueOperations<String, Object> operation = redisTemplate.opsForValue();
-        return (T) operation.get(key);
+
+    public static <T> T getCacheObject(String key, Class<T> clazz) {
+        getStringRedisTemplate();
+        String json = stringRedisTemplate.opsForValue().get(key);
+        return JSON.parseObject(json, clazz);
     }
 
-    public static boolean deleteObject(final String key) {
-        getRedisTemplate();
-        return redisTemplate.delete(key);
+    public static boolean deleteObject(String key) {
+        getStringRedisTemplate();
+        return stringRedisTemplate.delete(key);
     }
 
-    private static RedisTemplate<String, Object> getRedisTemplate() {
-        if (redisTemplate == null) {
-            redisTemplate = SpringContextUtils.getBean("redisTemplate");
+    private static void getStringRedisTemplate() {
+        if (stringRedisTemplate == null) {
+            stringRedisTemplate = SpringContextUtils.getBean("stringRedisTemplate");
         }
-        return redisTemplate;
     }
 }
