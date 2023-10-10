@@ -30,9 +30,11 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         queryWrapper.eq("uid", username);
         log.debug("用户{}信息查询成功", username);
         User user = userDao.selectOne(queryWrapper);
+        user.setImage(null);
         user.setPassword("{bcrypt}" + new BCryptPasswordEncoder().encode(user.getPassword()));
         ArrayList<String> strings = new ArrayList<>();
-        strings.add("admin:user");
+        strings.add("admin");
+        strings.add("user");
         return new LoginUser(user, strings);
     }
 }
