@@ -14,7 +14,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/order")
-@CrossOrigin(origins = "http://localhost:8080/", allowCredentials = "true")
+@CrossOrigin(origins = "http://localhost:27000/", allowCredentials = "true")
 public class OrderController {
     @Autowired
     private HttpSession session;
