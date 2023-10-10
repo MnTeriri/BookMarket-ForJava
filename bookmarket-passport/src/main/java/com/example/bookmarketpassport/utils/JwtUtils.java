@@ -59,7 +59,7 @@ public class JwtUtils {
         return new SecretKeySpec(encodedKey, 0, encodedKey.length, "AES");
     }
 
-    public static Claims parseJWT(String jwt) throws Exception {
+    public static Claims parseJWT(String jwt){
         SecretKey secretKey = generalKey();
         return Jwts.parser().setSigningKey(secretKey).parseClaimsJws(jwt).getBody();
     }
