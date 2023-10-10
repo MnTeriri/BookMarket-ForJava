@@ -625,3 +625,289 @@ public class RedisCache implements Cache {
 
 ### 2023/9/23
 * 完善Spring Security，现在可以登录后访问有权限的Controller
+
+### 2023/10/10
+* Spring Security基本完结，也解决了单点登录。对于高版本的Spring Security，主要难点其实就是这个配置
+* 现在介绍Spring Security的基本使用方法（注意：此项目使用的是SpringBoot3.0，对应Security版本高于6.0，大部分方法都被弃用。
+  如使用低于3.0的SpringBoot，可以参考网上其他资料）
+* Spring Security配置类如下：
+~~~Java
+@Slf4j
+@Configuration
+@EnableWebSecurity//启用Security
+@EnableMethodSecurity
+public class SecurityConfig {
+    //查用户权限信息的，继承自带的UserDetailsService
+    @Autowired
+    private UserDetailsServiceImpl userService;
+    //JWT过滤器，用于判定前端请求当中的header是否有token信息
+    @Autowired
+    private JwtAuthenticationTokenFilter jwtAuthenticationTokenFilter;
+
+    public SecurityConfig() {
+        log.debug("创建配置类对象：SecurityConfig");
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .authorizeHttpRequests((authorize) -> authorize
+                        .requestMatchers("/TestController/test").permitAll()//放行/TestController/test
+                        .requestMatchers("/api/user/login").permitAll()//放行/api/user/login（登录请求）
+                        .requestMatchers("/api/photo/captcha.jpg").permitAll()//放行/api/photo/captcha.jpg（验证码）
+                        .requestMatchers(HttpMethod.OPTIONS).permitAll()//放行所有OPTIONS请求,要不然连header里面的token都获取不了
+                        .anyRequest().authenticated()//其他的，都要有权限才行
+                )
+                .addFilterBefore(jwtAuthenticationTokenFilter, UsernamePasswordAuthenticationFilter.class)//设置JWT过滤器，验证token
+                .cors(AbstractHttpConfigurer::disable)//关闭cors
+                .csrf(AbstractHttpConfigurer::disable);//关闭csrf
+        return http.build();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager() {
+        DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
+        daoAuthenticationProvider.setUserDetailsService(userService);
+        ProviderManager providerManager = new ProviderManager(daoAuthenticationProvider);
+        return providerManager;
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder(){
+        return new BCryptPasswordEncoder();
+    }
+}
+~~~
+* UserDetailsServiceImpl主要用于查询用户权限信息（我这给死了），并封装到UserDetails里面。 
+* 注意：前面设置的BCryptPasswordEncoder，用于对密码加密，这里查询出来的密码必须是经过BCryptPasswordEncoder加密后的，前面要带上前缀{bcrypt}，表明这密码不是明文
+* UserDetailsServiceImpl如下：
+~~~Java
+@Slf4j
+@Service
+public class UserDetailsServiceImpl implements UserDetailsService {
+    @Autowired
+    private IUserDao userDao;
+
+    public UserDetailsServiceImpl() {
+        log.debug("创建自定义UserDetailsService对象：UserDetailsServiceImpl");
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("uid", username);
+        log.debug("用户{}信息查询成功", username);
+        User user = userDao.selectOne(queryWrapper);
+        user.setImage(null);
+        user.setPassword("{bcrypt}" + new BCryptPasswordEncoder().encode(user.getPassword()));
+        ArrayList<String> strings = new ArrayList<>();
+        strings.add("admin");
+        strings.add("user");
+        return new LoginUser(user, strings);
+    }
+}
+~~~
+* 这是自己的UserServiceImpl，之前咋写还咋写，只是加了一步，把上面的UserDetailsServiceImpl在这调用一下，完成登录验证后查询权限信息
+* UserServiceImpl如下：
+~~~Java
+@Slf4j
+@Service
+public class UserServiceImpl implements IUserService {
+    @Autowired
+    private AuthenticationManager authenticationManager;
+    @Autowired
+    private IUserDao userDao;
+
+    @Override
+    public String login(User user) {
+        //判定用户是否存在和密码是否正确（也可以用异常，偷个懒）
+        //...
+        //查询权限信息
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(user.getUid(), DigestUtil.md5Hex(user.getPassword()));
+        Authentication authenticate = authenticationManager.authenticate(authenticationToken);
+        LoginUser loginUser = (LoginUser) authenticate.getPrincipal();
+        RedisUtils.setCacheObject(user.getUid(), loginUser);
+        //生成token，token需要返回给前端
+        String token = JwtUtils.createJWT(user.getUid());
+        
+        return ".....";
+    }
+}
+~~~
+* JwtAuthenticationTokenFilter继承OncePerRequestFilter，用于每次访问时检验token
+* 代码如下：
+~~~Java
+@Slf4j
+@Component
+public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
+
+    public JwtAuthenticationTokenFilter() {
+        log.debug("创建配置类对象：JwtAuthenticationTokenFilter");
+    }
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        //判定header里面的token
+        String token = request.getHeader("token");
+        System.out.println(request.getMethod());
+        if (token == null) {
+            log.error("没有token，不允许访问");
+            filterChain.doFilter(request, response);//没token放行
+            return;
+        }
+        //从token解析uid，查用户权限信息
+        Claims claims = JwtUtils.parseJWT(token);
+        String uid = claims.getSubject();
+        //从redis中读取信息
+        LoginUser loginUser = RedisUtils.getCacheObject(uid, LoginUser.class);
+        if (loginUser == null) {
+            log.error("没有用户：{}登录信息，不允许访问", uid);
+            filterChain.doFilter(request, response);
+            return;
+        }
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(loginUser, loginUser.getUser().getPassword(), loginUser.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authenticationToken);//添加到SecurityContext上下文
+        log.debug("用户：{}登录信息存在，允许访问，登录信息存放到SecurityContextHolder：{}", uid, authenticationToken);
+        filterChain.doFilter(request, response);
+    }
+}
+~~~
+* 两个工具类，RedisUtils和JWTUtils
+* 代码如下：
+~~~Java
+public class RedisUtils {
+    private static StringRedisTemplate stringRedisTemplate;
+
+    public static void setCacheObject(String key, Object value) {
+        getStringRedisTemplate();
+        stringRedisTemplate.opsForValue().set(key, JSON.toJSONString(value));
+    }
+
+
+    public static <T> T getCacheObject(String key, Class<T> clazz) {
+        getStringRedisTemplate();
+        String json = stringRedisTemplate.opsForValue().get(key);
+        return JSON.parseObject(json, clazz);
+    }
+
+    public static boolean deleteObject(String key) {
+        getStringRedisTemplate();
+        return stringRedisTemplate.delete(key);
+    }
+
+    private static void getStringRedisTemplate() {
+        if (stringRedisTemplate == null) {
+            stringRedisTemplate = SpringContextUtils.getBean("stringRedisTemplate");
+        }
+    }
+}
+~~~
+
+~~~Java
+public class JwtUtils {
+    //有效期为
+    public static final Long JWT_TTL = 60 * 60 * 1000L;// 60 * 60 *1000  一个小时
+    //设置秘钥明文
+    public static final String JWT_KEY = "123123";
+
+    public static String getUUID() {
+        return UUID.randomUUID().toString().replaceAll("-", "");
+    }
+
+    public static String createJWT(String subject) {
+        JwtBuilder builder = getJwtBuilder(subject, null, getUUID());// 设置过期时间
+        return builder.compact();
+    }
+
+    public static String createJWT(String subject, Long ttlMillis) {
+        JwtBuilder builder = getJwtBuilder(subject, ttlMillis, getUUID());// 设置过期时间
+        return builder.compact();
+    }
+
+    private static JwtBuilder getJwtBuilder(String subject, Long ttlMillis, String uuid) {
+        SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
+        SecretKey secretKey = generalKey();
+        long nowMillis = System.currentTimeMillis();
+        Date now = new Date(nowMillis);
+        if (ttlMillis == null) {
+            ttlMillis = JwtUtils.JWT_TTL;
+        }
+        long expMillis = nowMillis + ttlMillis;
+        Date expDate = new Date(expMillis);
+        return Jwts.builder().setId(uuid)//唯一的ID
+                .setSubject(subject)//主题 可以是JSON数据
+                .setIssuer("sg")//签发者
+                .setIssuedAt(now)//签发时间
+                .signWith(signatureAlgorithm, secretKey)//使用HS256对称加密算法签名, 第二个参数为秘钥
+                .setExpiration(expDate);
+    }
+
+    public static String createJWT(String id, String subject, Long ttlMillis) {
+        JwtBuilder builder = getJwtBuilder(subject, ttlMillis, id);// 设置过期时间
+        return builder.compact();
+    }
+
+    public static SecretKey generalKey() {
+        byte[] encodedKey = Base64.getDecoder().decode(JwtUtils.JWT_KEY);
+        return new SecretKeySpec(encodedKey, 0, encodedKey.length, "AES");
+    }
+
+    public static Claims parseJWT(String jwt){
+        SecretKey secretKey = generalKey();
+        return Jwts.parser().setSigningKey(secretKey).parseClaimsJws(jwt).getBody();
+    }
+}
+~~~
+
+* 登录用户实体，继承自带的UserDetails，存放你自己的User和User的权限，记得把权限转换成Authorities
+~~~Java
+@NoArgsConstructor
+@AllArgsConstructor
+@Data
+@JsonIgnoreProperties({"enabled", "accountNonExpired", "accountNonLocked", "credentialsNonExpired", "authorities", "username", "password"})
+public class LoginUser implements UserDetails {
+    private User user;
+    private List<String> permissions;
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        //把permissions中字符串类型的权限信息转换成GrantedAuthority对象存入authorities中
+        List<GrantedAuthority> list = new ArrayList<>();
+        for (String permission : permissions) {
+            list.add(new SimpleGrantedAuthority(permission));
+        }
+        return list;
+    }
+
+    @Override
+    public String getPassword() {
+        return user.getPassword();
+    }
+
+    @Override
+    public String getUsername() {
+        return user.getUid();
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
+
+}
+~~~
