@@ -11,7 +11,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 @RestController
 @RequestMapping("/api/address")
-@CrossOrigin(origins = "http://localhost:8080/", allowCredentials = "true")
+@CrossOrigin(origins = "http://localhost:27000/", allowCredentials = "true")
 public class AddressController {
     @Autowired
     private IAddressService addressService;
