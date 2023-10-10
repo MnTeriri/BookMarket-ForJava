@@ -19,7 +19,6 @@ public class User implements Serializable {
     private String password;//密码（MD5加密）
     private Integer flag;//账号类型，0商家，1用户
     private Integer status;//假删除，0删除了，1没删除
-    @TableField(exist = false)
     private byte[] image;
     @TableField(exist = false)
     private String imageString;//头像
